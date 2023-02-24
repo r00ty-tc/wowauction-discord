@@ -7,132 +7,134 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 // Read configuration
 const { token, baseUrl } = require('./config.json');
 
-// On interaction event
-client.on(Events.InteractionCreate, async interaction => {
-    // If the interaction is not a command, do nothing
-    if (!interaction.isChatInputCommand()) return;
+// Login to discord with bot token
+client.login(token);
 
-    // Handle set realm command
-    if (interaction.commandName === 'ahsetrealm') {
-        // This gives us a bit more time to reply (in case DB is loaded)
-        await interaction.deferReply();
+// Handle set realm command
+async function handleSetRealm(interaction) {
+    // This gives us a bit more time to reply (in case DB is loaded)
+    await interaction.deferReply();
 
-        // Get realm ID from parameter, guild (server) id from interaction
-        var realmid = interaction.options.getString('realm');
-        var guildId = interaction.guildId;
+    // Get realm ID from parameter, guild (server) id from interaction
+    var realmid = interaction.options.getString('realm');
+    var guildId = interaction.guildId;
 
-        // Generate URL
-        var url = baseUrl + "/private-api/setrealm?gid=" + guildId + "&realmid=" + realmid;
+    // Generate URL
+    var url = baseUrl + "/private-api/setrealm?gid=" + guildId + "&realmid=" + realmid;
 
-        try {
-            // call api to update realm
-            const response = await getJSON(url);
+    try {
+        // call api to update realm
+        const response = await getJSON(url);
 
-            // If OK report success to user, else report failure
-            if(response.result == "OK"){
-                await interaction.editReply("Realm for this server set to **" + response.name + "**");
-            } else {
-                await interaction.editReply("**" + response.message + "**");
-            }
-        }
-        catch (error) {
-            console.log(error);
+        // If OK report success to user, else report failure
+        if(response.result == "OK"){
+            await interaction.editReply("Realm for this server set to **" + response.name + "**");
+        } else {
+            await interaction.editReply("**" + response.message + "**");
         }
     }
-    // Handle set faction command
-    else if(interaction.commandName == 'ahsetfaction') {
-        // This gives us a bit more time to reply (in case DB is loaded)
-        await interaction.deferReply();
+    catch (error) {
+        console.log(error);
+    }
+}
 
-        // Get faction from parameter and guild (server) id from interaction
-        var faction = interaction.options.getString('faction');
-        var guildId = interaction.guildId;
+// Handle set faction command
+async function handleSetFaction(interaction) {
+    // This gives us a bit more time to reply (in case DB is loaded)
+    await interaction.deferReply();
 
-        // Generate URL
-        var url = baseUrl + "/private-api/setfaction?gid=" + guildId + "&faction=" + faction;
+    // Get faction from parameter and guild (server) id from interaction
+    var faction = interaction.options.getString('faction');
+    var guildId = interaction.guildId;
 
-        try {
-            // call api to update faction
-            const response = await getJSON(url);
+    // Generate URL
+    var url = baseUrl + "/private-api/setfaction?gid=" + guildId + "&faction=" + faction;
 
-            // If OK report success to user, else report failure
-            if(response.result  == "OK"){
-                await interaction.editReply("Faction for this server set to **" + response.name + "**");
-            } else {
-                await interaction.editReply("**" + response.message + "**");
-            }
-        }
-        catch (error) {
-            console.log(error);
+    try {
+        // call api to update faction
+        const response = await getJSON(url);
+
+        // If OK report success to user, else report failure
+        if(response.result  == "OK"){
+            await interaction.editReply("Faction for this server set to **" + response.name + "**");
+        } else {
+            await interaction.editReply("**" + response.message + "**");
         }
     }
-    // Handle search command
-    else if (interaction.commandName == 'ahsearch') {
-        // This gives us a bit more time to reply (in case DB is loaded)
-        await interaction.deferReply();
+    catch (error) {
+        console.log(error);
+    }
+}
 
-        // Get the search term and validate it
-        var searchTerm = interaction.options.getString('itemstring');
-        if(searchTerm.length < 3){
-            message.channel.send("**Query is too short. Please type a longer query.**");
-        }
+// Handle search command
+async function handleSearch(interaction)
+{
+    // This gives us a bit more time to reply (in case DB is loaded)
+    await interaction.deferReply();
 
-        // Get guild id, guild name and user name.
-        var guildId = interaction.guildId;
-        var guildName = interaction.guild.name;
-        var userName = interaction.user.tag;
+    // Get the search term and validate it
+    var searchTerm = interaction.options.getString('itemstring');
+    if(searchTerm.length < 3){
+        message.channel.send("**Query is too short. Please type a longer query.**");
+    }
 
-        // Generate URL
-        var url = baseUrl + "/private-api/get-ah-price?gid=" + guildId + "&name=" + searchTerm;
+    // Get guild id, guild name and user name.
+    var guildId = interaction.guildId;
+    var guildName = interaction.guild.name;
+    var userName = interaction.user.tag;
 
-        // Log the seach info to the console
-        console.log("From: " + guildId + " (" + guildName + ") /" + userName + " for " + searchTerm);
+    // Generate URL
+    var url = baseUrl + "/private-api/get-ah-price?gid=" + guildId + "&name=" + searchTerm;
 
-        try {
-            // Perform the query against the api
-            const response = await getJSON(url);
+    // Log the seach info to the console
+    console.log("From: " + guildId + " (" + guildName + ") /" + userName + " for " + searchTerm);
 
-            if(response.result  == "OK"){
-                // If response is OK then generate response message
-                var replyMessage = "";
-                replyMessage += "**Auction Data (Found " + response.matches.length + " items)**\n";
-                replyMessage += "Realm ***" + response.realm_name + "*** on ***" + response.server_name + "*** **" + response.faction + "** faction\n";
-                var l = response.matches.length;
-                if(l > 3)
-                    l = 3;
-                for(var i =0; i < l; i++){
-                    replyMessage += "Name : **" + response.matches[i].name + "**\n";
-                    replyMessage += "Median Bid Amount : **" + currency(parseInt(response.matches[i].bid_median)) + "**\n";
-                    replyMessage += "Median Buyout Amount : **" + currency(parseInt(response.matches[i].buyout_median)) + "**\n";
-                    replyMessage += "Minimum Bid Found : **" + currency(parseInt(response.matches[i].bid_min)) + "**\n";
-                    replyMessage += "Minimum Buyout Found : **" + currency(parseInt(response.matches[i].buyout_min)) + "**\n";
-                    replyMessage += "Quantity : **" + response.matches[i].quantity + "**\n";
-                    var trend = "";
-                    if(response.matches[i].trend > 0)
-                        trend = " :arrow_up: ";
-                    else
-                        trend = " :arrow_down: ";
+    try {
+        // Perform the query against the api
+        const response = await getJSON(url);
 
-                    replyMessage += "Trend : **" + trend + "(" + Math.floor(response.matches[i].trend * 100) + "%)**\n";
-                    replyMessage += "Last Updated : " + response.matches[i].ago + "\n";
-                    replyMessage += "Link : " + response.matches[i].link + "\n ---------------------------------\n";
-                }
+        if(response.result  == "OK"){
+            // If response is OK then generate response message
+            var replyMessage = "";
+            replyMessage += "**Auction Data (Found " + response.matches.length + " items)**\n";
+            replyMessage += "Realm ***" + response.realm_name + "*** on ***" + response.server_name + "*** **" + response.faction + "** faction\n";
+            var l = response.matches.length;
+            if(l > 3)
+                l = 3;
+            for(var i =0; i < l; i++){
+                replyMessage += "Name : **" + response.matches[i].name + "**\n";
+                replyMessage += "Median Bid Amount : **" + currency(parseInt(response.matches[i].bid_median)) + "**\n";
+                replyMessage += "Median Buyout Amount : **" + currency(parseInt(response.matches[i].buyout_median)) + "**\n";
+                replyMessage += "Minimum Bid Found : **" + currency(parseInt(response.matches[i].bid_min)) + "**\n";
+                replyMessage += "Minimum Buyout Found : **" + currency(parseInt(response.matches[i].buyout_min)) + "**\n";
+                replyMessage += "Quantity : **" + response.matches[i].quantity + "**\n";
+                var trend = "";
+                if(response.matches[i].trend > 0)
+                    trend = " :arrow_up: ";
+                else
+                    trend = " :arrow_down: ";
 
-                // Send message to user
-                await interaction.editReply(replyMessage);
+                replyMessage += "Trend : **" + trend + "(" + Math.floor(response.matches[i].trend * 100) + "%)**\n";
+                replyMessage += "Last Updated : " + response.matches[i].ago + "\n";
+                replyMessage += "Link : " + response.matches[i].link + "\n ---------------------------------\n";
             }
-            else {
-                // Otherwise report error
-                if(typeof response != "undefined")
-                await interaction.editReply("**" + response.message + "**");
-            }
+
+            // Send message to user
+            await interaction.editReply(replyMessage);
         }
-        catch (error) {
-            console.log(error);
+        else {
+            // Otherwise report error
+            if(typeof response != "undefined")
+            await interaction.editReply("**" + response.message + "**");
         }
     }
-    // Handle command to list guilds (servers) using the bot. Only for main channel
-    else if (interaction.commandName == 'ahlistguilds') {
+    catch (error) {
+        console.log(error);
+    }
+}
+
+// Handle command to list guilds (servers) using the bot. Only for main channel
+async function handleListGuilds(interaction) {
         // Create message with header
         var replyMessage = "**Listing guilds using this bot**\n";
         replyMessage += "```Guild ID----------------- Name---------------------------------------------- Members---\n";
@@ -144,23 +146,42 @@ client.on(Events.InteractionCreate, async interaction => {
             var guildId = (thisGuild.id.padEnd(25, ' '));
             var guildName = (thisGuild.name.padEnd(50, ' '));
             var guildMembers = (thisGuild.memberCount.toString().padStart(10, ' '));
-            replyMessage += guildId + " " + guildName + " " + guildMembers + "\n";
+            replyMessage += guildId + " " + guildName + " " + guildMembers + "```\n";
         });
 
         // Generate the footer
-        replyMessage += "```\n";
         replyMessage += client.guilds.cache.size.toString() + " guild(s)";
 
-        // Send the message
+        // Send the message (only to requestor)
         interaction.reply(
             {
                 content: replyMessage, ephemeral: true
             });
+}
+// On interaction event
+client.on(Events.InteractionCreate, async interaction => {
+    // If the interaction is not a command, do nothing
+    if (!interaction.isChatInputCommand()) return;
+
+    switch (interaction.commandName.toLowerCase()) {
+        // Handle set realm command
+        case "ahsetrealm":
+                handleSetRealm(interaction);
+                break;
+        // Handle set faction command
+        case "ahsetfaction":
+            handleSetFaction(interaction);
+            break;
+        // Handle search command
+        case "ahsearch":
+            handleSearch(interaction);
+            break;
+        // Handle command to list guilds (servers) using the bot. Only for main channel
+        case "ahlistguilds":
+            handleListGuilds(interaction)
+            break;                    
     }
 });
-
-// Login to discord with bot token
-client.login(token);
 
 // Format gold amount for discord messages
 function currency(amt){
