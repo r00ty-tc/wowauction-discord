@@ -1,0 +1,5 @@
+/config.json.live
+/config.json.test
+/config.json
+/node_modules
+/package-lock.json

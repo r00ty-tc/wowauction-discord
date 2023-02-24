@@ -1,0 +1,6 @@
+{
+	"clientId": "<Discord bot client ID>",
+	"guildId": "<server ID for home server>",
+	"token": "<Discord bot token>"
+	"baseUrl": "https://your.endpoint.host"
+}
