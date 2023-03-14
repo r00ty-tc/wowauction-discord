@@ -3,3 +3,5 @@
 /config.json
 /node_modules
 /package-lock.json
+checkbot.sh
+startbot.sh
