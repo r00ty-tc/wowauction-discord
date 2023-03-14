@@ -11,13 +11,19 @@ const { token, baseUrl } = require('./config.json');
 client.login(token);
 
 // Handle set realm command
-async function handleSetRealm(interaction) {
-    // This gives us a bit more time to reply (in case DB is loaded)
-    await interaction.deferReply();
-
+async function handleSetRealm(interaction) {   
     // Get realm ID from parameter, guild (server) id from interaction
     var realmid = interaction.options.getString('realm');
     var guildId = interaction.guildId;
+
+    if (guildId == null)
+    {
+        await interaction.reply("Unable to set realm from private message");
+        return;
+    }
+
+    // This gives us a bit more time to reply (in case DB is loaded)
+    await interaction.deferReply();
 
     // Generate URL
     var url = baseUrl + "/private-api/setrealm?gid=" + guildId + "&realmid=" + realmid;
@@ -40,12 +46,19 @@ async function handleSetRealm(interaction) {
 
 // Handle set faction command
 async function handleSetFaction(interaction) {
-    // This gives us a bit more time to reply (in case DB is loaded)
-    await interaction.deferReply();
 
     // Get faction from parameter and guild (server) id from interaction
     var faction = interaction.options.getString('faction');
     var guildId = interaction.guildId;
+
+    if (guildId == null)
+    {
+        await interaction.reply("Unable to set faction from private message");
+        return;
+    }
+
+    // This gives us a bit more time to reply (in case DB is loaded)
+    await interaction.deferReply();
 
     // Generate URL
     var url = baseUrl + "/private-api/setfaction?gid=" + guildId + "&faction=" + faction;
@@ -139,6 +152,9 @@ async function handleListGuilds(interaction) {
         var replyMessage = "**Listing guilds using this bot**\n";
         replyMessage += "```Guild ID----------------- Name---------------------------------------------- Members---\n";
 
+        // Refresh guild cache
+        await client.guilds.fetch();
+
         // Handle each guild entry
         client.guilds.cache.forEach(function(thisGuild)
         {
@@ -192,11 +208,11 @@ function currency(amt){
     var g = c2;
     var out = "";
     if(g > 0)
-        out += g + ":small_orange_diamond: ";
+        out += g + "<:goldyoutubecoin:1085216173387423904> ";
     if(s > 0)
-        out += s + ":small_blue_diamond: ";
+        out += s + "<:sliveryoutubecoi:1085216174897373285> ";
     if(c > 0)
-        out += c + "C";
+        out += c + "<:bronzeyoutubecoi:1085216170900193280>";
     return out;
 }
 
