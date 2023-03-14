@@ -148,12 +148,12 @@ async function handleSearch(interaction)
 
 // Handle command to list guilds (servers) using the bot. Only for main channel
 async function handleListGuilds(interaction) {
+        // Refresh guild cache
+        await client.guilds.fetch();
+
         // Create message with header
         var replyMessage = "**Listing guilds using this bot**\n";
         replyMessage += "```Guild ID----------------- Name---------------------------------------------- Members---\n";
-
-        // Refresh guild cache
-        await client.guilds.fetch();
 
         // Handle each guild entry
         client.guilds.cache.forEach(function(thisGuild)
@@ -162,11 +162,11 @@ async function handleListGuilds(interaction) {
             var guildId = (thisGuild.id.padEnd(25, ' '));
             var guildName = (thisGuild.name.padEnd(50, ' '));
             var guildMembers = (thisGuild.memberCount.toString().padStart(10, ' '));
-            replyMessage += guildId + " " + guildName + " " + guildMembers + "```\n";
+            replyMessage += guildId + " " + guildName + " " + guildMembers + "\n";
         });
 
         // Generate the footer
-        replyMessage += client.guilds.cache.size.toString() + " guild(s)";
+        replyMessage += "```\n" + client.guilds.cache.size.toString() + " guild(s)";
 
         // Send the message (only to requestor)
         interaction.reply(
