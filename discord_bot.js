@@ -44,6 +44,42 @@ async function handleSetRealm(interaction) {
     }
 }
 
+// Handle set channel realm command
+async function handleSetChannelRealm(interaction) {   
+    // Get realm ID from parameter, guild (server) id from interaction
+    var realmid = interaction.options.getString('realm');
+    var guildId = interaction.guildId;
+    var channel = interaction.channel.id;
+
+    if (guildId == null || channel == null)
+    {
+        await interaction.reply("Unable to set realm from private message");
+        return;
+    }
+
+    // This gives us a bit more time to reply (in case DB is loaded)
+    await interaction.deferReply();
+
+    // Generate URL
+    var url = baseUrl + "/private-api/setchannelrealm?gid=" + guildId + "&cid=" + channel + "&realmid=" + realmid;
+
+    try {
+        // call api to update realm
+        const response = await getJSON(url);
+
+        // If OK report success to user, else report failure
+        if(response.result == "OK"){
+            await interaction.editReply("Realm for this channel set to **" + response.name + "**");
+        } else {
+            await interaction.editReply("**" + response.message + "**");
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+
 // Handle set faction command
 async function handleSetFaction(interaction) {
 
@@ -79,6 +115,42 @@ async function handleSetFaction(interaction) {
     }
 }
 
+// Handle set channel faction command
+async function handleSetChannelFaction(interaction) {
+
+    // Get faction from parameter and guild (server) id from interaction
+    var faction = interaction.options.getString('faction');
+    var guildId = interaction.guildId;
+    var channel = interaction.channel.id;
+
+    if (guildId == null || channel == null)
+    {
+        await interaction.reply("Unable to set faction from private message");
+        return;
+    }
+
+    // This gives us a bit more time to reply (in case DB is loaded)
+    await interaction.deferReply();
+
+    // Generate URL
+    var url = baseUrl + "/private-api/setchannelfaction?gid=" + guildId + "&cid=" + channel + "&faction=" + faction;
+
+    try {
+        // call api to update faction
+        const response = await getJSON(url);
+
+        // If OK report success to user, else report failure
+        if(response.result  == "OK"){
+            await interaction.editReply("Faction for this channel set to **" + response.name + "**");
+        } else {
+            await interaction.editReply("**" + response.message + "**");
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
 // Handle search command
 async function handleSearch(interaction)
 {
@@ -95,12 +167,13 @@ async function handleSearch(interaction)
     var guildId = interaction.guildId;
     var guildName = interaction.guild.name;
     var userName = interaction.user.tag;
+    var channel = interaction.channel.id;
 
     // Generate URL
-    var url = baseUrl + "/private-api/get-ah-price?gid=" + guildId + "&name=" + searchTerm;
+    var url = baseUrl + "/private-api/get-ah-price?gid=" + guildId + "&cid=" + channel + "&name=" + searchTerm;
 
     // Log the seach info to the console
-    console.log("From: " + guildId + " (" + guildName + ") /" + userName + " for " + searchTerm);
+    console.log("From: " + guildId + " (" + guildName + ") in channel " + channel + " /" + userName + " for " + searchTerm);
 
     try {
         // Perform the query against the api
@@ -187,6 +260,14 @@ client.on(Events.InteractionCreate, async interaction => {
         // Handle set faction command
         case "ahsetfaction":
             handleSetFaction(interaction);
+            break;
+        // Handle set channel realm command
+        case "ahsetchannelrealm":
+            handleSetChannelRealm(interaction);
+            break;
+        // Handle set channel faction command
+        case "ahsetchannelfaction":
+            handleSetChannelFaction(interaction);
             break;
         // Handle search command
         case "ahsearch":

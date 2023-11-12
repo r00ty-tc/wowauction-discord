@@ -2,12 +2,12 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
         data: new SlashCommandBuilder()
-                .setName('ahsetrealm')
-                .setDescription('Sets the realm to use on this discord server (Lordaeron,Icecrown)')        
+                .setName('ahsetchannelfaction')
+                .setDescription('Sets the faction to use on this specific channel (h or a)')
                 .addStringOption(option =>
                         option
-                                .setName('realm')
-                                .setDescription('The realm to use on this server (Lordaeron,Icecrown)')
+                                .setName('faction')
+                                .setDescription('The faction to use on this server (h or a)')
                                 .setRequired(true))
                 .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
 };

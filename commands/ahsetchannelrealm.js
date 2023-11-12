@@ -2,8 +2,8 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
         data: new SlashCommandBuilder()
-                .setName('ahsetrealm')
-                .setDescription('Sets the realm to use on this discord server (Lordaeron,Icecrown)')        
+                .setName('ahsetchannelrealm')
+                .setDescription('Sets the realm to use on this specific channel (Lordaeron,Icecrown)')        
                 .addStringOption(option =>
                         option
                                 .setName('realm')
