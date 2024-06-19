@@ -1,4 +1,6 @@
+const MAX_MESSAGE = 2000;
 const { Client, Events, GatewayIntentBits } = require('discord.js');
+const os = require('os');
 
 const bent = require('bent');
 const getJSON = bent('json');
@@ -206,12 +208,12 @@ async function handleSearch(interaction)
             }
 
             // Send message to user
-            await interaction.editReply(replyMessage);
+            await splitReply(interaction, replyMessage, true, false);
         }
         else {
             // Otherwise report error
             if(typeof response != "undefined")
-            await interaction.editReply("**" + response.message + "**");
+                await interaction.editReply("**" + response.message + "**");
         }
     }
     catch (error) {
@@ -228,13 +230,26 @@ async function handleListGuilds(interaction) {
         var replyMessage = "**Listing guilds using this bot**\n";
         replyMessage += "```Guild ID----------------- Name---------------------------------------------- Members---\n";
 
+        var firstMessage = true;
         // Handle each guild entry
+        //for (var thisGuild of client.guilds.cache)
         client.guilds.cache.forEach(function(thisGuild)
         {
             // Generate a line for this guild/server
             var guildId = (thisGuild.id.padEnd(25, ' '));
             var guildName = (thisGuild.name.padEnd(50, ' '));
             var guildMembers = (thisGuild.memberCount.toString().padStart(10, ' '));
+            var thisLine = guildId + " " + guildName + " " + guildMembers + "\n";
+            if (replyMessage.length + thisLine.length > MAX_MESSAGE){
+                replyMessage += "```";
+                if (firstMessage)
+                    interaction.reply({ content: replyMessage, ephemeral: true });
+                else
+                    interaction.followUp({ content: replyMessage, ephemeral: true });
+                firstMessage = false;
+                replyMessage = "```Guild ID----------------- Name---------------------------------------------- Members---\n";
+            }
+                
             replyMessage += guildId + " " + guildName + " " + guildMembers + "\n";
         });
 
@@ -242,11 +257,9 @@ async function handleListGuilds(interaction) {
         replyMessage += "```\n" + client.guilds.cache.size.toString() + " guild(s)";
 
         // Send the message (only to requestor)
-        interaction.reply(
-            {
-                content: replyMessage, ephemeral: true
-            });
+        interaction.reply({ content: replyMessage, ephemeral: true });
 }
+
 // On interaction event
 client.on(Events.InteractionCreate, async interaction => {
     // If the interaction is not a command, do nothing
@@ -279,6 +292,64 @@ client.on(Events.InteractionCreate, async interaction => {
             break;                    
     }
 });
+
+async function splitReply(interaction, message, isDeferred, isEphemeral)
+{
+    var deferMessage = isDeferred;
+    var followUp = false;
+    if (message.length <= MAX_MESSAGE){
+        // If message is less than max, just reply
+        if (deferMessage)
+           await interaction.editReply(message);
+        else
+            await interaction.reply({ content: message, ephemeral: isEphemeral });
+        return;
+    }
+
+    // Otherwise we need to split
+    var lines = message.split("\n");
+    var currentMessage = "";
+    //lines.forEach(line => {
+    for (const line of lines){
+        if (currentMessage.length + line.length <= MAX_MESSAGE){
+            currentMessage += "\n" + line;
+        }
+        else{
+            if (followUp){
+                await interaction.followUp({ content: currentMessage, ephemeral: isEphemeral });
+            }
+            else{
+                if (deferMessage){
+                    await interaction.editReply(currentMessage);
+                    deferMessage = false;
+                }
+                else{
+                    await interaction.reply(
+                        { content: currentMessage, ephemeral: isEphemeral });
+                }
+                currentMessage = line;
+                followUp = true;
+            }
+        }
+        
+    }
+
+    // Send any remaining characters
+    if (currentMessage.length > 0){
+        if (followUp){
+            interaction.followUp({ content: currentMessage, ephemeral: isEphemeral });
+        }
+        else{
+            if (deferMessage){
+                await interaction.editReply(currentMessage);
+            }
+            else{
+                await interaction.reply(
+                    { content: currentMessage, ephemeral: isEphemeral }); 
+            }
+        }
+    }
+}
 
 // Format gold amount for discord messages
 function currency(amt){
