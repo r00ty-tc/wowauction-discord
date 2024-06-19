@@ -233,8 +233,11 @@ async function handleListGuilds(interaction) {
         var firstMessage = true;
         // Handle each guild entry
         //for (var thisGuild of client.guilds.cache)
-        client.guilds.cache.forEach(function(thisGuild)
+        //client.guilds.cache.forEach(function(thisGuild)
+        //for (const guildNum in client.guilds.cache)
+        for (var guildNum = 0; guildNum < client.guilds.cache.size; guildNum++)
         {
+            var thisGuild = client.guilds.cache.at(guildNum);
             // Generate a line for this guild/server
             var guildId = (thisGuild.id.padEnd(25, ' '));
             var guildName = (thisGuild.name.padEnd(50, ' '));
@@ -243,24 +246,24 @@ async function handleListGuilds(interaction) {
             if (replyMessage.length + thisLine.length > MAX_MESSAGE){
                 replyMessage += "```";
                 if (firstMessage)
-                    interaction.reply({ content: replyMessage, ephemeral: true });
+                    await interaction.reply({ content: replyMessage, ephemeral: true });
                 else
-                    interaction.followUp({ content: replyMessage, ephemeral: true });
+                    await interaction.followUp({ content: replyMessage, ephemeral: true });
                 firstMessage = false;
                 replyMessage = "```Guild ID----------------- Name---------------------------------------------- Members---\n";
             }
                 
             replyMessage += guildId + " " + guildName + " " + guildMembers + "\n";
-        });
+        }
 
         // Generate the footer
         replyMessage += "```\n" + client.guilds.cache.size.toString() + " guild(s)";
 
         // Send the message (only to requestor)
         if (firstMessage)
-            interaction.reply({ content: replyMessage, ephemeral: true });
+            await interaction.reply({ content: replyMessage, ephemeral: true });
         else
-            interaction.followUp({ content: replyMessage, ephemeral: true });
+            await interaction.followUp({ content: replyMessage, ephemeral: true });
 }
 
 // On interaction event
