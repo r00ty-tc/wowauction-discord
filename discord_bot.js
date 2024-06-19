@@ -257,7 +257,10 @@ async function handleListGuilds(interaction) {
         replyMessage += "```\n" + client.guilds.cache.size.toString() + " guild(s)";
 
         // Send the message (only to requestor)
-        interaction.reply({ content: replyMessage, ephemeral: true });
+        if (firstMessage)
+            interaction.reply({ content: replyMessage, ephemeral: true });
+        else
+            interaction.followUp({ content: replyMessage, ephemeral: true });
 }
 
 // On interaction event
